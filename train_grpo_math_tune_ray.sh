@@ -6,43 +6,54 @@ export NCCL_DEBUG=DEBUG
 export RAY_BACKEND_LOG_LEVEL=debug
 export RAY_DEDUP_LOGS=1
 
+export HEAD_IP=0.0.0.0
+export HEAD_PORT=6379
+export ARNOLD_WORKER_NUM=1
+
 
 export PROJECT_NAME=verl_train
-export WANDB_API_KEY=TO_BE_FILLED
 export WANDB_OFFICIAL=1
 export VLLM_ATTENTION_BACKEND=XFORMERS
-export HDFS_DATA_PATH=TO_BE_FILLED
-export HDFS_MODEL_PATH=TO_BE_FILLED
-export HDFS_CHECKPOINT_PATH=TO_BE_FILLED
-export HDFS_LOG_PATH=TO_BE_FILLED
+export HDFS_DATA_PATH=/workspace/simpleRL-reason/data
+export HDFS_MODEL_PATH=/workspace/simpleRL-reason/models
+export HDFS_CHECKPOINT_PATH=/workspace/simpleRL-reason/checkpoints
+export HDFS_LOG_PATH=/workspace/simpleRL-reason/logs
 export RUN_NAME=verl-grpo
 
 
 # Default values
-TRAIN_BATCH_SIZE=256
-VAL_BATCH_SIZE=500
+# TRAIN_BATCH_SIZE=256
+# VAL_BATCH_SIZE=500
+TRAIN_BATCH_SIZE=1
+VAL_BATCH_SIZE=1
 MAX_PROMPT_LENGTH=1024
 MAX_RESPONSE_LENGTH=3072
 LEARNING_RATE=5e-7
-PPO_MINI_BATCH_SIZE=256
+# PPO_MINI_BATCH_SIZE=256
+PPO_MINI_BATCH_SIZE=1
 # per GPU
-PPO_MICRO_BATCH_SIZE=2
+# PPO_MICRO_BATCH_SIZE=2
+PPO_MICRO_BATCH_SIZE=1
 CLIP_RATIO=0.2
 KL_LOSS_COEF=0.001
 ENTROPY_COEFFIENT=0.001
 KL_LOSS_TYPE="low_var_kl"
 TEMPERATURE=1.0
 LOG_PROB_MICRO_BATCH_SIZE=160
-ROLLOUT_N=8
+# ROLLOUT_N=8
+ROLLOUT_N=2
 KL_COEF=0.001
 TOTAL_EPOCHS=20
-DATASET_NAME=simplelr_math_35
+# DATASET_NAME=simplelr_math_35
+DATASET_NAME=""
 ROLLOUT_GPU_MEMORY_UTIL=0.6
-MODEL_NAME=Qwen2.5-Math-7B
+# MODEL_NAME=Qwen2.5-Math-7B
+MODEL_NAME=Qwen2.5-0.5B
 SAVE_FREQ=20
 TEST_FREQ=5
 REMOVE_CLIP=False
 ROLLOUT_TENSOR_MODEL_PARALLEL_SIZE=2
+# ROLLOUT_TENSOR_MODEL_PARALLEL_SIZE=1
 MICRO_ROLLOUT_BATCH_SIZE=1024
 REMOVE_PREVIOUS_CKPT=False
 
@@ -170,12 +181,18 @@ ray job submit --address=${HEAD_IP}:${HEAD_PORT} \
         "env_vars": {
           "http_proxy": "",
           "https_proxy": ""
-        }
+        },
+        "excludes": [
+          "models/Qwen2.5-0.5B/model.safetensors",
+          "models/Qwen2.5-0.5B/.git/lfs/objects/",
+          ".git/objects/pack/",
+          "examples/simplelr_math_eval/data/tabmwp/test.jsonl"
+        ]
     }' \
   -- python -m verl.trainer.main_ppo \
   algorithm.adv_estimator=grpo \
-  data.train_files=$HDFS_DATA_PATH/$DATASET_NAME/train.parquet \
-  data.val_files=$HDFS_DATA_PATH/$DATASET_NAME/test.parquet \
+  data.train_files=$HDFS_DATA_PATH/train.parquet \
+  data.val_files=$HDFS_DATA_PATH/test.parquet \
   data.train_batch_size=$TRAIN_BATCH_SIZE \
   data.val_batch_size=$VAL_BATCH_SIZE \
   data.max_prompt_length=$MAX_PROMPT_LENGTH \
@@ -212,8 +229,8 @@ ray job submit --address=${HEAD_IP}:${HEAD_PORT} \
   trainer.project_name=$PROJECT_NAME \
   trainer.remove_previous_ckpt=$REMOVE_PREVIOUS_CKPT \
   trainer.experiment_name=$RUN_NAME \
-  trainer.n_gpus_per_node=8 \
-  trainer.nnodes=$ARNOLD_WORKER_NUM \
+  trainer.n_gpus_per_node=2 \
+  trainer.nnodes=1 \
   trainer.remove_clip=$REMOVE_CLIP \
   trainer.save_freq=$SAVE_FREQ \
   trainer.test_freq=$TEST_FREQ \

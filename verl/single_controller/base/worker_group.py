@@ -25,7 +25,7 @@ from verl.single_controller.base.decorator import MAGIC_ATTR, Dispatch, get_pred
 
 class ResourcePool:
 
-    def __init__(self, process_on_nodes=None, max_collocate_count: int = 10, n_gpus_per_node=8) -> None:
+    def __init__(self, process_on_nodes=None, max_collocate_count: int = 10, n_gpus_per_node=2) -> None:
         if process_on_nodes is None:
             process_on_nodes = []
         self._store = process_on_nodes

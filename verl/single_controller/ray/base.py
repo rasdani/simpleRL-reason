@@ -54,7 +54,7 @@ class RayResourcePool(ResourcePool):
                  name_prefix: str = "",
                  max_colocate_count: int = 5,
                  detached=False) -> None:
-        super().__init__(process_on_nodes, max_colocate_count)
+        super().__init__(process_on_nodes, max_colocate_count, n_gpus_per_node=2)
         self.use_gpu = use_gpu
         # print(f"in RayProcessDispatchConfiguration: name_prefix = {name_prefix}")
         self.name_prefix = name_prefix
@@ -85,6 +85,7 @@ class RayResourcePool(ResourcePool):
         ray.get([pg.ready() for pg in pgs])
 
         self.pgs = pgs
+        print("PLACEMENT GROUPS: ", pgs)
         return pgs
 
 
@@ -217,6 +218,7 @@ class RayWorkerGroup(WorkerGroup):
         strategy = "PACK"
         if bin_pack:
             strategy = "STRICT_PACK"
+        # breakpoint()
         pgs = resource_pool.get_placement_groups(strategy=strategy)
         world_size = resource_pool.world_size
         self._world_size = world_size
